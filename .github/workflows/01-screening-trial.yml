@@ -1,0 +1,120 @@
+name: 选股试跑（LLM）
+
+# 手动触发的选股试跑：策略 dual_low（低 PE + 低 PB），市场 cn，最多 20 只，
+# 带 LLM 二次重排（Gemini）。只跑一次，不设定时；结果上传为 Actions 构件。
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: screening-trial
+  cancel-in-progress: false
+
+jobs:
+  screen-trial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v5
+
+      - name: 设置 Python 环境
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 安装依赖
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          # requirements.txt 未直接声明 pyyaml / pydantic，本地试跑时需补装
+          pip install pyyaml pydantic
+
+      - name: 创建必要目录
+        run: |
+          mkdir -p data logs screening-trial
+
+      - name: 选股试跑（dual_low + LLM 重排）
+        env:
+          SCREENING_ENABLED: 'true'
+          SCREENING_DATA_DIR: ${{ github.workspace }}/data
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LLM_MODEL: gemini/gemini-3-flash-preview
+        run: |
+          python - <<'PYEOF'
+          import json
+          import time
+          from dataclasses import asdict
+
+          from src.services.screening.config import Config
+          from src.services.screening.pipeline import screen
+
+          t0 = time.time()
+
+          cfg = Config.from_env()
+          print(f"LLM model: {cfg.llm_model}")
+          print(f"LLM configured: {cfg.has_llm_config()}  key_set={'yes' if cfg.llm_api_key else 'no'}")
+          print(f"llm_rank_weight={cfg.llm_rank_weight} llm_min_coverage={cfg.llm_min_coverage}")
+
+
+          def progress(pct, msg):
+              print(f"[{time.time() - t0:7.1f}s] {pct:3d}% {msg}", flush=True)
+
+
+          result = screen(
+              "dual_low",
+              market="cn",
+              max_output=20,
+              use_llm=True,
+              progress_callback=progress,
+          )
+          elapsed = time.time() - t0
+          print(f"ELAPSED {elapsed:.1f}s")
+          print(f"strategy={result.strategy} version={result.strategy_version} "
+                f"category={result.strategy_category} market={result.market}")
+          print(f"snapshot_count={result.snapshot_count} after_filter={result.after_filter_count} "
+                f"picks={len(result.picks)} llm_ranked={result.llm_ranked} "
+                f"ranking_mode={result.ranking_mode} model={result.llm_model_used}")
+          print(f"llm_coverage={result.llm_coverage} failure={result.llm_failure_reason!r}")
+          print(f"snapshot_source={result.snapshot_source}")
+          for d in result.degradation:
+              print(f"degradation: {d}")
+          for d in result.portfolio_concentration_notes:
+              print(f"concentration: {d}")
+          print(f"market_view: {result.llm_market_view[:500]}")
+          print(f"selection_logic: {result.llm_selection_logic[:500]}")
+          print(f"portfolio_risk: {result.llm_portfolio_risk[:500]}")
+          for p in result.picks:
+              print(f"#{p.rank:2d} {p.code} {p.name} final={p.final_score:.1f} "
+                    f"screen={p.screen_score:.1f} llm={p.llm_score} "
+                    f"sector={p.llm_sector} theme={p.llm_theme} risk={p.risk_level}")
+
+          out = asdict(result)
+          out["_elapsed_sec"] = elapsed
+          with open("screening-trial/result.json", "w", encoding="utf-8") as f:
+              json.dump(out, f, ensure_ascii=False, indent=2, default=str)
+          print("saved screening-trial/result.json")
+          PYEOF
+
+      - name: 上传选股结果
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: screening-trial-llm-${{ github.run_number }}
+          path: screening-trial/
+          retention-days: 30
+
+      - name: 显示运行结果
+        if: always()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "📊 选股试跑完成"
+          echo "=========================================="
+          if [ -f "screening-trial/result.json" ]; then
+            ls -la screening-trial/
+            python -c "import json; d=json.load(open('screening-trial/result.json')); print('llm_ranked=', d.get('llm_ranked'), 'ranking_mode=', d.get('ranking_mode'), 'model=', d.get('llm_model_used'), 'picks=', len(d.get('picks', [])))"
+          else
+            echo "⚠️ 未生成 result.json"
+          fi
