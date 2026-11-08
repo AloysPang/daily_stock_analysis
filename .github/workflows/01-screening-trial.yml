@@ -53,37 +53,75 @@ jobs:
           import json
           import time
           from dataclasses import asdict
+
           from src.services.screening.config import Config
           from src.services.screening.pipeline import screen
 
           t0 = time.time()
+
           cfg = Config.from_env()
           print(f"LLM model: {cfg.llm_model}")
           print(f"LLM configured: {cfg.has_llm_config()}  key_set={'yes' if cfg.llm_api_key else 'no'}")
+          print(f"llm_rank_weight={cfg.llm_rank_weight} llm_min_coverage={cfg.llm_min_coverage}")
+
+
+          def progress(pct, msg):
+              print(f"[{time.time() - t0:7.1f}s] {pct:3d}% {msg}", flush=True)
+
 
           result = screen(
-            "oversold_reversal",
-            market="cn",
-            max_output=20,
-            use_llm=True,
+              "oversold_reversal",
+              market="cn",
+              max_output=20,
+              use_llm=True,
+              progress_callback=progress,
           )
-
           elapsed = time.time() - t0
-          print(f"筛选完成：llm_ranked={result.llm_ranked}")
-          print(f"覆盖度 llm_coverage={result.llm_coverage:.2%}")
-          print(f"ranking_mode={result.ranking_mode}")
-          for i, r in enumerate(result.results, 1):
-            print(f"{i:>2}. {r.code} {r.name} 综合分={r.score:.1f}")
-          print(f"耗时 {elapsed:.1f}s")
+          print(f"ELAPSED {elapsed:.1f}s")
+          print(f"strategy={result.strategy} version={result.strategy_version} "
+                f"category={result.strategy_category} market={result.market}")
+          print(f"snapshot_count={result.snapshot_count} after_filter={result.after_filter_count} "
+                f"picks={len(result.picks)} llm_ranked={result.llm_ranked} "
+                f"ranking_mode={result.ranking_mode} model={result.llm_model_used}")
+          print(f"llm_coverage={result.llm_coverage} failure={result.llm_failure_reason!r}")
+          print(f"snapshot_source={result.snapshot_source}")
+          for d in result.degradation:
+              print(f"degradation: {d}")
+          for d in result.portfolio_concentration_notes:
+              print(f"concentration: {d}")
+          print(f"market_view: {result.llm_market_view[:500]}")
+          print(f"selection_logic: {result.llm_selection_logic[:500]}")
+          print(f"portfolio_risk: {result.llm_portfolio_risk[:500]}")
+          for p in result.picks:
+              print(f"#{p.rank:2d} {p.code} {p.name} final={p.final_score:.1f} "
+                    f"screen={p.screen_score:.1f} llm={p.llm_score} "
+                    f"sector={p.llm_sector} theme={p.llm_theme} risk={p.risk_level}")
 
+          out = asdict(result)
+          out["_elapsed_sec"] = elapsed
           with open("screening-trial/result.json", "w", encoding="utf-8") as f:
-            json.dump(asdict(result), f, ensure_ascii=False, indent=2)
+              json.dump(out, f, ensure_ascii=False, indent=2, default=str)
+          print("saved screening-trial/result.json")
           PYEOF
 
-      - name: 上传结果构件
-        uses: actions/upload-artifact@v4
+      - name: 上传选股结果
+        uses: actions/upload-artifact@v6
+        if: always()
         with:
-          name: screening-trial-result
-          path: screening-trial/result.json
-          if-no-files-found: error
-          retention-days: 7
+          name: screening-trial-llm-${{ github.run_number }}
+          path: screening-trial/
+          retention-days: 30
+
+      - name: 显示运行结果
+        if: always()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "📊 选股试跑完成"
+          echo "=========================================="
+          if [ -f "screening-trial/result.json" ]; then
+            ls -la screening-trial/
+            python -c "import json; d=json.load(open('screening-trial/result.json')); print('llm_ranked=', d.get('llm_ranked'), 'ranking_mode=', d.get('ranking_mode'), 'model=', d.get('llm_model_used'), 'picks=', len(d.get('picks', [])))"
+          else
+            echo "⚠️ 未生成 result.json"
+          fi
