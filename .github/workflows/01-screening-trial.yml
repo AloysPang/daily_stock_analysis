@@ -3,6 +3,9 @@ name: 选股试跑（LLM）
 # 手动触发的选股试跑：策略 dual_low（低 PE + 低 PB），市场 cn，最多 20 只，
 # 带 LLM 二次重排（Gemini）。只跑一次，不设定时；结果上传为 Actions 构件。
 on:
+  schedule:
+    - cron: '30 2 * * 1-5'
+    - cron: '30 5 * * 1-5'
   workflow_dispatch:
 
 concurrency:
