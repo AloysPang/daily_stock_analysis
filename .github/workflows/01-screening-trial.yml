@@ -60,7 +60,7 @@ jobs:
           LLM_MAX_TOKENS: '8192'
           LLM_TIMEOUT_SEC: '120'
           # Gemini only; no fallback model
-          run: python .github/scripts/run_screening_trial.py "${{ inputs.strategy }}"
+        run: python .github/scripts/run_screening_trial.py "${{ inputs.strategy }}"
           
       - name: 上传选股结果
         uses: actions/upload-artifact@v6
