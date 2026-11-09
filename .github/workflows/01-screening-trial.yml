@@ -1,9 +1,25 @@
 name: 选股试跑（LLM）
 
-# 手动触发的选股试跑：策略 oversold_reversal（超跌反转），市场 cn，最多 20 只，
+# 手动触发的选股试跑：策略由手动触发时选择，市场 cn，最多 20 只，
 # 带 LLM 二次重排（Gemini）。只跑一次，不设定时；结果上传为 Actions 构件。
 on:
   workflow_dispatch:
+    inputs:
+      strategy:
+        description: '本次运行要用的选股策略'
+        type: choice
+        default: oversold_reversal
+        options:
+          - dual_low
+          - quality_value
+          - blue_chip_income
+          - low_volatility_quality
+          - capital_heat
+          - momentum_quality
+          - shrink_pullback
+          - volume_breakout
+          - oversold_reversal
+          - balanced_alpha
 
 concurrency:
   group: screening-trial
@@ -35,7 +51,7 @@ jobs:
         run: |
           mkdir -p data logs screening-trial
 
-      - name: 选股试跑（oversold_reversal + LLM 重排）
+      - name: 选股试跑（手动触发时选择的策略 + LLM 重排）
         env:
           SCREENING_ENABLED: 'true'
           SCREENING_DATA_DIR: ${{ github.workspace }}/data
@@ -70,7 +86,7 @@ jobs:
 
 
           result = screen(
-              "oversold_reversal",
+              "${{ inputs.strategy }}",
               market="cn",
               max_output=20,
               use_llm=True,
