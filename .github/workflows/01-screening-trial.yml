@@ -55,6 +55,7 @@ jobs:
         env:
           SCREENING_ENABLED: 'true'
           SCREENING_DATA_DIR: ${{ github.workspace }}/data
+          PYTHONPATH: ${{ github.workspace }}          
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           LLM_MODEL: gemini/gemini-3-flash-preview
           LLM_MAX_TOKENS: '8192'
