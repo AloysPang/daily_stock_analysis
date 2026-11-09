@@ -59,6 +59,7 @@ jobs:
           LLM_MODEL: gemini/gemini-3-flash-preview
           LLM_MAX_TOKENS: '8192'
           LLM_TIMEOUT_SEC: '120'
+          # Gemini only; no fallback model
           run: |
           python - <<'PYEOF'
           import json
