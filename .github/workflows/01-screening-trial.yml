@@ -57,7 +57,7 @@ jobs:
           SCREENING_DATA_DIR: ${{ github.workspace }}/data
           PYTHONPATH: ${{ github.workspace }}          
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          LLM_MODEL: openai/claude-sonnet-5
+          LLM_MODEL: gemini/gemini-3-flash-preview
           LLM_MAX_TOKENS: '8192'
           LLM_TIMEOUT_SEC: '120'
           # Gemini 主用；失败时回落中转站（xfxf.ccwu.cc） Sonnet 5
@@ -65,9 +65,7 @@ jobs:
           LLM_RELAY_BASE_URL: http://xfxf.ccwu.cc
           LLM_RELAY_API_KEY: ${{ secrets.RELAY_API_KEY }}
           LLM_RELAY_MODELS: claude-sonnet-5
-          OPENAI_BASE_URL: http://xfxf.ccwu.cc
-          OPENAI_API_KEY: ${{ secrets.RELAY_API_KEY }}
-          LITELLM_FALLBACK_MODELS: gemini/gemini-3-flash-preview
+          LITELLM_FALLBACK_MODELS: openai/claude-sonnet-5
         run: python .github/scripts/run_screening_trial.py "${{ inputs.strategy }}"
           
       - name: 上传选股结果
