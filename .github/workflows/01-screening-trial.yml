@@ -69,8 +69,7 @@ jobs:
         run: python .github/scripts/run_screening_trial.py "${{ inputs.strategy }}"
           
       - name: 上传选股结果
-      
-        uses: actions/upload-artifact@v6
+              uses: actions/upload-artifact@v6
         if: always()
         with:
           name: screening-trial-llm-${{ github.run_number }}
