@@ -1,7 +1,7 @@
 name: 选股试跑（LLM）
 
 # 手动触发的选股试跑：策略由手动触发时选择，市场 cn，最多 20 只，
-# 带 LLM 二次重排（Gemini）。只跑一次，不设定时；结果上传为 Actions 构件。
+# 带 LLM 二次重排（Gemini 主用，中转站 Sonnet 5 备用）。只跑一次，不设定时；结果上传为 Actions 构件。
 on:
   workflow_dispatch:
     inputs:
@@ -60,7 +60,12 @@ jobs:
           LLM_MODEL: gemini/gemini-3-flash-preview
           LLM_MAX_TOKENS: '8192'
           LLM_TIMEOUT_SEC: '120'
-          # Gemini only; no fallback model
+          # Gemini 主用；失败时回落中转站（xfxf.ccwu.cc） Sonnet 5
+          LLM_CHANNELS: relay
+          LLM_RELAY_BASE_URL: http://xfxf.ccwu.cc/v1
+          LLM_RELAY_API_KEY: ${{ secrets.RELAY_API_KEY }}
+          LLM_RELAY_MODELS: claude-sonnet-5
+          LITELLM_FALLBACK_MODELS: openai/claude-sonnet-5
         run: python .github/scripts/run_screening_trial.py "${{ inputs.strategy }}"
           
       - name: 上传选股结果
