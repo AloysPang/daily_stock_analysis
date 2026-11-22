@@ -76,8 +76,8 @@ jobs:
           LITELLM_CONFIG: ${{ vars.LITELLM_CONFIG || secrets.LITELLM_CONFIG }}
           LITELLM_CONFIG_YAML: ${{ vars.LITELLM_CONFIG_YAML || secrets.LITELLM_CONFIG_YAML }}
           LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
-          LITELLM_MODEL: openai/claude-sonnet-5
-          LITELLM_FALLBACK_MODELS: openai/claude-sonnet-5
+          LITELLM_MODEL: ${{ vars.LITELLM_MODEL || secrets.LITELLM_MODEL }}
+          LITELLM_FALLBACK_MODELS: ${{ vars.LITELLM_FALLBACK_MODELS || secrets.LITELLM_FALLBACK_MODELS }}
           AGENT_LITELLM_MODEL: ${{ vars.AGENT_LITELLM_MODEL || secrets.AGENT_LITELLM_MODEL }}
           VISION_MODEL: ${{ vars.VISION_MODEL || secrets.VISION_MODEL }}
           OPENAI_VISION_MODEL: ${{ vars.OPENAI_VISION_MODEL || secrets.OPENAI_VISION_MODEL }}
@@ -88,10 +88,7 @@ jobs:
           LLM_PROMPT_CACHE_TELEMETRY_ENABLED: ${{ vars.LLM_PROMPT_CACHE_TELEMETRY_ENABLED || secrets.LLM_PROMPT_CACHE_TELEMETRY_ENABLED }}
           LLM_PROMPT_CACHE_HINTS_ENABLED: ${{ vars.LLM_PROMPT_CACHE_HINTS_ENABLED || secrets.LLM_PROMPT_CACHE_HINTS_ENABLED }}
           LLM_PROMPT_CACHE_DIAGNOSTICS_LEVEL: ${{ vars.LLM_PROMPT_CACHE_DIAGNOSTICS_LEVEL || secrets.LLM_PROMPT_CACHE_DIAGNOSTICS_LEVEL }}
-          LLM_CHANNELS: relay
-          LLM_RELAY_BASE_URL: http://xfxf.ccwu.cc/v1
-          LLM_RELAY_API_KEY: ${{ secrets.RELAY_API_KEY }}
-          LLM_RELAY_MODELS: claude-sonnet-5
+          LLM_CHANNELS: ${{ vars.LLM_CHANNELS || secrets.LLM_CHANNELS }}
           # Modelflare：只需 MODELFLARE_KEY；以下渠道配置供高级覆盖。
           MODELFLARE_KEY: ${{ secrets.MODELFLARE_KEY }}
           LLM_MODELFLARE_PROTOCOL: ${{ vars.LLM_MODELFLARE_PROTOCOL || secrets.LLM_MODELFLARE_PROTOCOL }}
@@ -122,9 +119,9 @@ jobs:
           AIHUBMIX_KEY: ${{ secrets.AIHUBMIX_KEY }}
 
           # OpenAI 兼容 API（备选）
-          OPENAI_API_KEY: ${{ secrets.RELAY_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_API_KEYS: ${{ secrets.OPENAI_API_KEYS }}
-          OPENAI_BASE_URL: http://xfxf.ccwu.cc/v1
+          OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL || secrets.OPENAI_BASE_URL }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || secrets.OPENAI_MODEL }}
 
           # DeepSeek
