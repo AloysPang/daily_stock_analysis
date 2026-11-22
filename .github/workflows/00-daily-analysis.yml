@@ -92,8 +92,7 @@ jobs:
                     LLM_RELAY_BASE_URL: http://xfxf.ccwu.cc
                     LLM_RELAY_API_KEY: ${{ secrets.RELAY_API_KEY }}
                     LLM_RELAY_MODELS: claude-sonnet-5
-                    OPENAI_BASE_URL: http://xfxf.ccwu.cc
-                    OPENAI_API_KEY: ${{ secrets.RELAY_API_KEY }}
+                    
           # Modelflare：只需 MODELFLARE_KEY；以下渠道配置供高级覆盖。
           MODELFLARE_KEY: ${{ secrets.MODELFLARE_KEY }}
           LLM_MODELFLARE_PROTOCOL: ${{ vars.LLM_MODELFLARE_PROTOCOL || secrets.LLM_MODELFLARE_PROTOCOL }}
@@ -124,9 +123,9 @@ jobs:
           AIHUBMIX_KEY: ${{ secrets.AIHUBMIX_KEY }}
 
           # OpenAI 兼容 API（备选）
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+                    OPENAI_API_KEY: ${{ secrets.RELAY_API_KEY }}
           OPENAI_API_KEYS: ${{ secrets.OPENAI_API_KEYS }}
-          OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL || secrets.OPENAI_BASE_URL }}
+                    OPENAI_BASE_URL: http://xfxf.ccwu.cc
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || secrets.OPENAI_MODEL }}
 
           # DeepSeek
